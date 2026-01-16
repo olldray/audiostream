@@ -26,7 +26,7 @@ class IosAudioInput(AudioInput):
         ret = as_ios_mic_stop()
         as_ios_mic_deinit()
 
-cdef void cy_audio_callback(char *buf, int buffersize) nogil:
+cdef void cy_audio_callback(char *buf, int buffersize) noexcept nogil:
     with gil:
         if py_audio_callback is None:
             return

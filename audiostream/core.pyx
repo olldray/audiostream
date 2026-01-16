@@ -35,7 +35,7 @@ class AudioException(Exception):
     pass
 
 
-cdef void audio_callback(int chan, void *stream, int l, void *userdata) nogil:
+cdef void audio_callback(int chan, void *stream, int l, void *userdata) noexcept nogil:
     cdef RingBuffer *rb = <RingBuffer *>userdata
     cdef int datasize
 

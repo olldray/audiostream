@@ -13,7 +13,7 @@ ctypedef struct RingBuffer:
     RingBufferChunk *first
     RingBufferChunk *last
 
-cdef RingBuffer *rb_new(int maxlen) nogil:
+cdef RingBuffer *rb_new(int maxlen) noexcept nogil:
     cdef RingBuffer *rb = <RingBuffer *>malloc(sizeof(RingBuffer))
     rb.cond = SDL_CreateCond()
     rb.condmtx = SDL_CreateMutex()
@@ -23,7 +23,7 @@ cdef RingBuffer *rb_new(int maxlen) nogil:
     rb.first = rb.last = NULL
     return rb
 
-cdef RingBufferChunk *rb_chunk_new(int size, char *mem) nogil:
+cdef RingBufferChunk *rb_chunk_new(int size, char *mem) noexcept nogil:
     cdef RingBufferChunk *chunk = <RingBufferChunk *>malloc(sizeof(RingBufferChunk))
     chunk.mem = chunk.data = <char *>malloc(size)
     memcpy(chunk.mem, mem, size)
@@ -31,11 +31,11 @@ cdef RingBufferChunk *rb_chunk_new(int size, char *mem) nogil:
     chunk.next = NULL
     return chunk
 
-cdef void rb_chunk_free(RingBufferChunk *chunk) nogil:
+cdef void rb_chunk_free(RingBufferChunk *chunk) noexcept nogil:
     free(chunk.mem)
     chunk.mem = NULL
 
-cdef void rb_free(RingBuffer *rb) nogil:
+cdef void rb_free(RingBuffer *rb) noexcept nogil:
     cdef RingBufferChunk *chunk = rb.first
     while chunk != NULL:
         rb.first = chunk.next
@@ -45,7 +45,7 @@ cdef void rb_free(RingBuffer *rb) nogil:
     SDL_DestroyMutex(rb.qmtx)
     SDL_DestroyCond(rb.cond)
 
-cdef void rb_appendleft(RingBuffer *rb, RingBufferChunk *chunk) nogil:
+cdef void rb_appendleft(RingBuffer *rb, RingBufferChunk *chunk) noexcept nogil:
     SDL_LockMutex(rb.qmtx)
     if rb.first == NULL:
         rb.first = rb.last = chunk
@@ -55,7 +55,7 @@ cdef void rb_appendleft(RingBuffer *rb, RingBufferChunk *chunk) nogil:
     rb.size += chunk.size
     SDL_UnlockMutex(rb.qmtx)
 
-cdef void rb_append(RingBuffer *rb, RingBufferChunk *chunk) nogil:
+cdef void rb_append(RingBuffer *rb, RingBufferChunk *chunk) noexcept nogil:
     SDL_LockMutex(rb.qmtx)
     if rb.last == NULL:
         rb.last = rb.first = chunk
@@ -65,7 +65,7 @@ cdef void rb_append(RingBuffer *rb, RingBufferChunk *chunk) nogil:
     rb.size += chunk.size
     SDL_UnlockMutex(rb.qmtx)
 
-cdef RingBufferChunk *rb_popleft(RingBuffer *rb) nogil:
+cdef RingBufferChunk *rb_popleft(RingBuffer *rb) noexcept nogil:
     cdef RingBufferChunk *chunk = NULL
     SDL_LockMutex(rb.qmtx)
     chunk = rb.first
@@ -79,7 +79,7 @@ cdef RingBufferChunk *rb_popleft(RingBuffer *rb) nogil:
     chunk.next = NULL
     return chunk
 
-cdef void rb_write(RingBuffer *rb, int size, char *cbuf) nogil:
+cdef void rb_write(RingBuffer *rb, int size, char *cbuf) noexcept nogil:
     cdef RingBufferChunk *chunk = rb_chunk_new(size, cbuf)
     SDL_LockMutex(rb.condmtx)
     while rb.size > rb.maxlen:
@@ -87,17 +87,17 @@ cdef void rb_write(RingBuffer *rb, int size, char *cbuf) nogil:
     SDL_UnlockMutex(rb.condmtx)
     rb_append(rb, chunk)
 
-cdef int rb_size(RingBuffer *rb) nogil:
+cdef int rb_size(RingBuffer *rb) noexcept nogil:
     return rb.size
 
-cdef int rb_maxlen(RingBuffer *rb) nogil:
+cdef int rb_maxlen(RingBuffer *rb) noexcept nogil:
     return rb.maxlen
 
-cdef int rb_poll(RingBuffer *rb) nogil:
+cdef int rb_poll(RingBuffer *rb) noexcept nogil:
     # FIXME we assume that reading / assign an int is atomic.
     return 1 if rb.size > 0 else 0
 
-cdef int rb_read_into(RingBuffer *rb, int bufsize, char *mem) nogil:
+cdef int rb_read_into(RingBuffer *rb, int bufsize, char *mem) noexcept nogil:
     cdef char *p = NULL
     cdef int size = bufsize
     cdef int datasize = bufsize
@@ -139,7 +139,7 @@ cdef int rb_read_into(RingBuffer *rb, int bufsize, char *mem) nogil:
     return datasize
 
 
-cdef char *rb_read(RingBuffer *rb, int size) nogil:
+cdef char *rb_read(RingBuffer *rb, int size) noexcept nogil:
     cdef RingBufferChunk *chunk = NULL
     cdef char *mem = NULL, *p = NULL
 
